@@ -1,9 +1,18 @@
 # Kvasir-VQA-x1
 
+
 A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy
 
 [Dataset on Hugging Face](https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1)  
 [Original Image Download (Simula Datasets)](https://datasets.simula.no/kvasir-vqa/)
+
+---
+
+🚧 **Work in Progress**  
+This repository is under active development. The dataset generation code, augmentation scripts, and evaluation tools will be released soon.
+
+If you urgently need access or have questions, please contact:  
+📧 **sushant@simula.no**
 
 ---
 
