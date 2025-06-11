@@ -59,8 +59,5 @@ This dataset is released under [CC BY-NC 4.0](https://creativecommons.org/licens
 
 ## 📌 Citation
 
-Please cite the associated dataset paper if you use Kvasir-VQA-x1 in your work.
+Please cite the associated dataset paper if you use Kvasir-VQA-x1 in your work (coming soon).
 
----
-
-© 2025 SimulaMet & OsloMet
