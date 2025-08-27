@@ -8,6 +8,16 @@ A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal
 
 > 🔗 [MediaEval Medico 2025 Challenge](https://github.com/simula/MediaEval-Medico-2025) uses this dataset. We encourage you to check out and participate!
 
+---
+
+🚧 **Work in Progress**  
+This repository is under active development. The training, evaluation code will be released soon.
+
+If you urgently need access or have questions, please contact:  
+📧 **sushant@simula.no**
+
+---
+
 ## 🧠 About
 
 **Kvasir-VQA-x1** is a multimodal dataset aimed at advancing medical visual question answering (MedVQA) in GI endoscopy. We build on the original [Kvasir-VQA](https://datasets.simula.no/kvasir-vqa/) by adding 159,549 new QA pairs with richer reasoning and complexity stratification.
