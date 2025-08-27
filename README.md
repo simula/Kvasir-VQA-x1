@@ -59,5 +59,16 @@ This dataset is released under [CC BY-NC 4.0](https://creativecommons.org/licens
 
 ## 📌 Citation
 
-Please cite the associated dataset paper if you use Kvasir-VQA-x1 in your work (coming soon).
+Please cite the associated dataset paper if you use Kvasir-VQA-x1 in your work:
+```bibtex
+@article{Gautam2025Jun,
+	author = {Gautam, Sushant and Riegler, Michael A. and Halvorsen, P{\aa}l},
+	title = {{Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy}},
+	journal = {arXiv},
+	year = {2025},
+	month = jun,
+	eprint = {2506.09958},
+	doi = {10.48550/arXiv.2506.09958}
+}
+```
 
