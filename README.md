@@ -6,7 +6,7 @@ A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal
 [Dataset on Hugging Face](https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1)  
 [Original Image Download (Simula Datasets)](https://datasets.simula.no/kvasir-vqa/) or see below.
 
-> 🔗 [MediaEval Medico 2025 Challenge](https://github.com/simula/MediaEval-Medico-2025) use this dataset. We encourage you to check out and participate!
+> 🔗 [MediaEval Medico 2025 Challenge](https://github.com/simula/MediaEval-Medico-2025) uses this dataset. We encourage you to check out and participate!
 
 ## 🧠 About
 
