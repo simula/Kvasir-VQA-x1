@@ -71,11 +71,13 @@ img_dir.mkdir(exist_ok=True, parents=True)
 
 # Download original images once from SimulaMet-HOST/Kvasir-VQA
 ds_host = load_dataset("SimulaMet-HOST/Kvasir-VQA", split="raw")
-seen = set()
-for row in tqdm(ds_host, desc="Saving original images"):
-    if row["img_id"] not in seen:
-        row["image"].save(img_dir / f"{row['img_id']}.jpg")
-        seen.add(row["img_id"])
+_, idx = np.unique(ds_host["img_id"], return_index=True)
+ds = ds.select(sorted(idx))
+existing = set(p.stem for p in img_dir.glob("*.jpg"))
+for row in tqdm(ds, desc="Saving unique images"):
+    if row["img_id"] in existing: 
+        continue
+    row["image"].save(img_dir / f"{row['img_id']}.jpg")
 
 # Save VLM-ready JSONLs (pointing to ORIGINAL images)
 for split in ["train", "test"]:
