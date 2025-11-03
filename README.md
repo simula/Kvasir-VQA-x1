@@ -30,6 +30,56 @@ This repo provides:
 - Sample training/evaluation workflows
 - Metric visualizations (e.g., radar plots)
 
+## Models trained in this work:
+| Model | HF Repo | W&B Logs |
+|:--|:--|:--|
+| Qwen2.5-VL-KvasirVQA-x1-ft | [HF](https://huggingface.co/SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft) | [W&B 7mk4gz8s](https://wandb.ai/ubl/Kvasir-VQA-x1/runs/7mk4gz8s) |
+| Qwen2.5-VL-Transf-KvasirVQA-x1-ft | [HF](https://huggingface.co/SimulaMet/Qwen2.5-VL-Transf-KvasirVQA-x1-ft) | [W&B megwnbz6](https://wandb.ai/ubl/Kvasir-VQA-x1/runs/megwnbz6) |
+| MedGemma-KvasirVQA-x1-ft | [HF](https://huggingface.co/SimulaMet/MedGemma-KvasirVQA-x1-ft) | [W&B 7mk4gz8s](https://wandb.ai/ubl/Kvasir-VQA-x1/runs/7mk4gz8s) |
+
+## 🖼️ Usage Example
+
+```python
+!pip install ms-swift==3.8.0 bitsandbytes qwen_vl_utils==0.0.11
+
+import torch
+from swift.llm import PtEngine, RequestConfig, InferRequest
+from transformers import BitsAndBytesConfig
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_compute_dtype=torch.float16
+)
+
+engine = PtEngine(
+    adapters=["SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft"],  # or use other fine-tuned model IDs
+    model_id_or_path="Qwen/Qwen2.5-VL-7B-Instruct",  # or use other base model IDs
+    quantization_config=bnb_config,
+    attn_impl="sdpa",
+    use_hf=True,
+)
+
+req_cfg = RequestConfig(max_tokens=512, temperature=0.3, top_k=20, top_p=0.7, repetition_penalty=1.05)
+
+infer_requests = [
+    InferRequest(messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image", "image": "https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1/resolve/main/images/clb0kvxvm90y4074yf50vf5nq.jpg"},
+            {"type": "text", "text": "What is shown in the image?"}
+        ],
+    }])
+]
+
+resp = engine.infer(infer_requests, req_cfg)
+print(resp[0].choices[0].message.content)
+```
+
+👉 See detailed examples in the [Colab usage notebook](https://colab.research.google.com/github/Simula/Kvasir-VQA-x1/blob/main/notebooks/usage.ipynb).
+
+
 ## 🧾 Dataset Structure
 
 Each sample includes:
@@ -182,7 +232,18 @@ This dataset is released under [CC BY-NC 4.0](https://creativecommons.org/licens
 ## 📌 Citation
 
 Please cite the associated dataset paper if you use Kvasir-VQA-x1 in your work:
+
 ```bibtex
+
+@incollection{Gautam2025Oct,
+  author={Gautam, Sushant and Riegler, Michael and Halvorsen, P{a}l},
+  title={Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy},
+  booktitle={Data Engineering in Medical Imaging},
+  year={2025},
+  publisher={Springer, Cham},
+  doi={10.1007/978-3-032-08009-7_6}
+}
+
 @article{Gautam2025Jun,
 	author = {Gautam, Sushant and Riegler, Michael A. and Halvorsen, P{\aa}l},
 	title = {{Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy}},
