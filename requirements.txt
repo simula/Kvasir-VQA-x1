@@ -1,0 +1,29 @@
+# Core
+datasets>=2.19
+huggingface_hub>=0.23
+pandas
+numpy
+Pillow
+tqdm
+openai>=1.30
+
+# Image augmentation (track 2)
+torchvision
+
+# Training / inference (MS-Swift stack; see training/*.sh)
+# ms-swift==3.8.0
+# deepspeed
+# transformers
+# peft
+
+# Evaluation metrics (evaluation/compute_metrics.py)
+evaluate
+rouge_score
+bert_score
+sacrebleu
+# BLEURT installs from source:
+#   pip install git+https://github.com/google-research/bleurt.git
+
+# Figures (evaluation/make_figures.py)
+matplotlib
+seaborn

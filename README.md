@@ -1,257 +1,177 @@
 # Kvasir-VQA-x1
 
+**A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy**
 
-A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy
+[![Dataset on Hugging Face](https://img.shields.io/badge/Dataset-Hugging%20Face-yellow)](https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1)
+[![arXiv](https://img.shields.io/badge/arXiv-2506.09958-b31b1b)](https://arxiv.org/abs/2506.09958)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-[Dataset on Hugging Face](https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1)  
-[Original Image Download (Simula Datasets)](https://datasets.simula.no/kvasir-vqa/) or see below.
-
-> 🔗 [MediaEval Medico 2025 Challenge](https://github.com/simula/MediaEval-Medico-2025) uses this dataset. We encourage you to check out and participate!
-
----
-
-🚧 **Work in Progress**  
-This repository is under active development. The training, evaluation code will be released soon.
-
-If you urgently need access or have questions, please contact:  
-📧 **sushant@simula.no**
-
----
+> 🚧 **Work in Progress** — this repository is under active development. The training and evaluation code is being finalised and will be released soon.
+>
+> If you urgently need access or have questions, contact 📧 [sushant@simula.no](mailto:sushant@simula.no).
 
 ## 🧠 About
 
-**Kvasir-VQA-x1** is a multimodal dataset aimed at advancing medical visual question answering (MedVQA) in GI endoscopy. We build on the original [Kvasir-VQA](https://datasets.simula.no/kvasir-vqa/) by adding 159,549 new QA pairs with richer reasoning and complexity stratification.
+Kvasir-VQA-x1 is a multimodal dataset for medical visual question answering (MedVQA) in GI endoscopy. Building on the original [Kvasir-VQA](https://datasets.simula.no/kvasir-vqa/), it adds **159,549** new QA pairs with richer reasoning and complexity stratification (Levels 1–3), plus weakly-augmented image variants for robustness testing.
 
-This repo provides:
+This repository provides the full, reproducible pipeline:
 
-- Augmentation scripts
-- Dataset generation code
-- JSON validators
-- Sample training/evaluation workflows
-- Metric visualizations (e.g., radar plots)
+- **Dataset generation** — LLM-assisted QA merging + answer naturalisation (`data/`)
+- **Image augmentation** — weak perturbations for the robustness track (`augmentation/`)
+- **Training** — LoRA recipes for Qwen2.5-VL and MedGemma via MS-Swift (`training/`)
+- **Inference** — batched generation over the test sets (`training/infer.sh`)
+- **Evaluation** — NLG metrics (Table 6), LLM-as-a-judge adjudication (Table 7), and paper figures (Figs 1–3) (`evaluation/`)
+- **Reference results** — the aggregate metric + adjudication JSONs behind the paper tables (`results/`)
 
-## Models trained in this work:
-| Model | HF Repo | W&B Logs |
-|:--|:--|:--|
-| Qwen2.5-VL-KvasirVQA-x1-ft | [HF](https://huggingface.co/SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft) | [W&B 7mk4gz8s](https://wandb.ai/ubl/Kvasir-VQA-x1/runs/7mk4gz8s) |
-| Qwen2.5-VL-Transf-KvasirVQA-x1-ft | [HF](https://huggingface.co/SimulaMet/Qwen2.5-VL-Transf-KvasirVQA-x1-ft) | [W&B megwnbz6](https://wandb.ai/ubl/Kvasir-VQA-x1/runs/megwnbz6) |
-| MedGemma-KvasirVQA-x1-ft | [HF](https://huggingface.co/SimulaMet/MedGemma-KvasirVQA-x1-ft) | [W&B 7mk4gz8s](https://wandb.ai/ubl/Kvasir-VQA-x1/runs/7mk4gz8s) |
+## 🖼️ Quick usage (run a fine-tuned model)
 
-## 🖼️ Usage Example
+```bash
+pip install ms-swift==3.8.0 bitsandbytes qwen_vl_utils==0.0.11
+```
 
 ```python
-!pip install ms-swift==3.8.0 bitsandbytes qwen_vl_utils==0.0.11
-
 import torch
 from swift.llm import PtEngine, RequestConfig, InferRequest
 from transformers import BitsAndBytesConfig
 
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_use_double_quant=True,
-    bnb_4bit_compute_dtype=torch.float16
-)
-
-engine = PtEngine(
-    adapters=["SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft"],  # or use other fine-tuned model IDs
-    model_id_or_path="Qwen/Qwen2.5-VL-7B-Instruct",  # or use other base model IDs
-    quantization_config=bnb_config,
-    attn_impl="sdpa",
-    use_hf=True,
-)
-
-req_cfg = RequestConfig(max_tokens=512, temperature=0.3, top_k=20, top_p=0.7, repetition_penalty=1.05)
-
-infer_requests = [
-    InferRequest(messages=[{
-        "role": "user",
-        "content": [
-            {"type": "image", "image": "https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1/resolve/main/images/clb0kvxvm90y4074yf50vf5nq.jpg"},
-            {"type": "text", "text": "What is shown in the image?"}
-        ],
-    }])
-]
-
-resp = engine.infer(infer_requests, req_cfg)
-print(resp[0].choices[0].message.content)
+bnb = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
+                         bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=torch.float16)
+engine = PtEngine(adapters=["SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft"],
+                  model_id_or_path="Qwen/Qwen2.5-VL-7B-Instruct",
+                  quantization_config=bnb, attn_impl="sdpa", use_hf=True)
+req = RequestConfig(max_tokens=512, temperature=0.3, top_k=20, top_p=0.7, repetition_penalty=1.05)
+r = InferRequest(messages=[{"role": "user", "content": [
+    {"type": "image", "image": "https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1/resolve/main/images/clb0kvxvm90y4074yf50vf5nq.jpg"},
+    {"type": "text", "text": "What is shown in the image?"}]}])
+print(engine.infer([r], req)[0].choices[0].message.content)
 ```
 
-👉 See detailed examples in the [Colab usage notebook](https://colab.research.google.com/github/Simula/Kvasir-VQA-x1/blob/main/notebooks/usage.ipynb).
+See the [Colab usage notebook](https://colab.research.google.com/github/simula/Kvasir-VQA-x1/blob/main/notebooks/usage.ipynb).
 
+## 📦 Models trained in this work
 
-## 🧾 Dataset Structure
+| Model | Hugging Face |
+|---|---|
+| Qwen2.5-VL-KvasirVQA-x1-ft | [`SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft`](https://huggingface.co/SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft) |
+| Qwen2.5-VL-Transf-KvasirVQA-x1-ft | [`SimulaMet/Qwen2.5-VL-Transf-KvasirVQA-x1-ft`](https://huggingface.co/SimulaMet/Qwen2.5-VL-Transf-KvasirVQA-x1-ft) |
+| MedGemma-KvasirVQA-x1-ft | [`SimulaMet/MedGemma-KvasirVQA-x1-ft`](https://huggingface.co/SimulaMet/MedGemma-KvasirVQA-x1-ft) |
 
-Each sample includes:
+## 🧾 Dataset structure
 
-| Field           | Description |
-|----------------|-------------|
-| `img_id`        | Image reference from Kvasir-VQA |
-| `complexity`    | Reasoning complexity (1–3) |
-| `question`      | Natural language QA |
-| `answer`        | Human-validated clinical answer |
-| `original`      | Source atomic QA pairs |
-| `question_class`| Clinical categories (e.g., polyp type) |
+Each sample: `img_id`, `complexity` (1–3), `question`, `answer`, `original` (source atomic QA pairs), `question_class` (clinical categories). Full data on [Hugging Face](https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1).
 
-See full dataset: [Hugging Face page](https://huggingface.co/datasets/SimulaMet/Kvasir-VQA-x1)
+## 🧪 Evaluation tracks
 
-## 🧪 Evaluation Tracks
+- **Track 1 — Normal:** QA on the original images.
+- **Track 2 — Transformed:** QA on weakly-augmented images (generated by the scripts here).
 
-- **Standard**: QA on original images  
-- **Transformed**: QA on visually perturbed images (augmented via scripts here)
+## 🔬 Reproducing the paper end to end
 
-## 📥 Download & Prepare Images
+### 0. Setup
 
-To ensure reproducibility, you can download the **original images** and generate **augmented (perturbed) images** locally.
-
----
-
-### 1️⃣ Download Original Images
-
-```python
-from datasets import load_dataset
-from pathlib import Path
-from tqdm import tqdm
-import os, json
-
-# Output folder
-d_path = "./Kvasir-VQA-x1/"
-img_dir = Path(os.path.abspath(os.path.join(d_path, "images")))
-img_dir.mkdir(exist_ok=True, parents=True)
-
-# Download original images once from SimulaMet-HOST/Kvasir-VQA
-ds_host = load_dataset("SimulaMet-HOST/Kvasir-VQA", split="raw")
-_, idx = np.unique(ds_host["img_id"], return_index=True)
-ds = ds.select(sorted(idx))
-existing = set(p.stem for p in img_dir.glob("*.jpg"))
-for row in tqdm(ds, desc="Saving unique images"):
-    if row["img_id"] in existing: 
-        continue
-    row["image"].save(img_dir / f"{row['img_id']}.jpg")
-
-# Save VLM-ready JSONLs (pointing to ORIGINAL images)
-for split in ["train", "test"]:
-    with open(f"{d_path}/Kvasir-VQA-x1-{split}.jsonl", "w", encoding="utf-8") as f:
-        for r in load_dataset("SimulaMet/Kvasir-VQA-x1", split=split):
-            f.write(json.dumps({
-                "messages": [
-                    {"role": "user", "content": f"<image>{r['question']}"},
-                    {"role": "assistant", "content": r["answer"]}
-                ],
-                "images": [str(img_dir / f"{r['img_id']}.jpg")]
-            }, ensure_ascii=False) + "\n")
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+# BLEURT:
+pip install git+https://github.com/google-research/bleurt.git
+cp .env.example .env   # then edit VLLM_BASE_URL etc.
 ```
 
----
+Training/inference additionally need the MS-Swift stack (`ms-swift==3.8.0`, `deepspeed`) on 4–8 GPUs.
 
-### 2️⃣ Generate Weakly-Augmented Images
+### 1. Build the dataset (optional — data is already on the Hub)
 
-This script saves **lightly perturbed versions** of each image and creates JSONLs pointing to them.
+Point a vLLM server at Qwen3-30B-A3B, then:
 
-```python
-from datasets import load_dataset, Image as HfImage
-from pathlib import Path
-from PIL import Image
-import torchvision.transforms as T
-from torchvision.transforms import InterpolationMode as IM
-import numpy as np, os, random, json, torch
+```bash
+vllm serve Qwen/Qwen3-30B-A3B --port 8000 --host 0.0.0.0 --max-model-len 4096
+export VLLM_BASE_URL="http://localhost:8000/v1" OPENAI_API_KEY="EMPTY"
 
-SEED = 42
-random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
-
-# Paths
-d_path = Path("./Kvasir-VQA-x1")
-aug_dir = (d_path / "image_weak_augmented").resolve()
-aug_dir.mkdir(parents=True, exist_ok=True)
-
-# Define weak augmentation
-weak = lambda img: T.Compose([
-    T.RandomResizedCrop(img.size[::-1], scale=(0.9,1.0), ratio=(img.size[0]/img.size[1]*0.95, img.size[0]/img.size[1]*1.05), interpolation=IM.BICUBIC),
-    T.RandomRotation((-10,10), interpolation=IM.BICUBIC, fill=0),
-    T.RandomAffine(0, translate=(0.1,0.1), interpolation=IM.BICUBIC, fill=0),
-    T.ColorJitter(0.2,0.2)
-])(img)
-
-# Work on unique images
-ds_aug = {}
-for split in ["train", "test"]:
-    ds = load_dataset("SimulaMet/Kvasir-VQA-x1", split=split).cast_column("image", HfImage())
-
-    # keep unique img_id
-    uniq_idx = sorted(np.unique(ds["img_id"], return_index=True)[1])
-    ds_unique = ds.select(uniq_idx)
-
-    # augment and save
-    def save_img_batch(batch):
-        return {"weak_image":[
-            (weak(img.convert("RGB")).save(p) or p) if not os.path.exists(p) else p
-            for img,p in zip(batch["image"], [str(aug_dir / f"{i}.jpg") for i in batch["img_id"]])
-        ]}
-    ds_unique = ds_unique.map(save_img_batch, batched=True, batch_size=10, num_proc=4)
-
-    # cast new column as HfImage
-    ds_aug[split] = ds_unique.cast_column("weak_image", HfImage())
-
-# Now you can access ad dataset object with:
-ds_train_aug = ds_aug["train"]
-ds_test_aug  = ds_aug["test"]
+python data/generate_requests.py --out final_requests.jsonl
+python data/call_lmm.py         --in final_requests.jsonl --out grouped_results.json
+python data/push_to_hf.py       --in grouped_results.json   # add --push --repo <you>/... to upload
 ```
 
----
+### 2. Prepare VLM-ready JSONLs
 
-### 3️⃣ Export JSONLs with Augmented Images
-
-```python
-# Save VLM-ready JSONLs pointing to AUGMENTED images
-for split in ["train", "test"]:
-    out_path = f"{d_path}/Kvasir-VQA-x1-{split}-aug.jsonl"
-    with open(out_path, "w", encoding="utf-8") as f:
-        for r in load_dataset("SimulaMet/Kvasir-VQA-x1", split=split):
-            f.write(json.dumps({
-                "messages": [
-                    {"role": "user", "content": f"<image>{r['question']}"},
-                    {"role": "assistant", "content": r["answer"]}
-                ],
-                "images": [str(aug_dir / f"{r['img_id']}.jpg")]
-            }, ensure_ascii=False) + "\n")
+```bash
+python data/prepare_vqa_format.py            # Track 1 (original images)  -> data/1_transform_*.jsonl
+python augmentation/generate_augmented.py    # 10 weak variants per image -> data/image_weak_augmented/
+python data/prepare_transformed_format.py    # Track 2 (augmented)        -> data/2_transform_*.jsonl
 ```
 
----
+### 3. Fine-tune (LoRA, MS-Swift)
 
-✅ With this, you’ll have both:
+```bash
+bash training/train_qwen25vl.sh     # Qwen2.5-VL-7B, Track 1
+bash training/train_medgemma.sh     # MedGemma-4B,   Track 2
+```
 
-- `Kvasir-VQA-x1-{train,test}.jsonl` → pointing to **original** images  
-- `Kvasir-VQA-x1-{train,test}-aug.jsonl` → pointing to **weakly augmented** images  
+### 4. Inference
 
----
+```bash
+ADAPTER=SimulaMet/Qwen2.5-VL-KvasirVQA-x1-ft \
+VAL=data/1_transform_to_vqa_format_test.jsonl \
+RESULT=results/pred_qwen25vl_ft.jsonl \
+bash training/infer.sh
+```
+
+### 5. Evaluation
+
+```bash
+# Table 6 — NLG metrics
+python evaluation/compute_metrics.py --in "results/pred_*.jsonl" --out-dir results/scores
+python evaluation/combine_scores.py  --in-dir results/scores
+
+# Table 7 — LLM-as-a-judge (needs the Qwen3 endpoint from step 1)
+python evaluation/llm_adjudicator.py --in "results/pred_*.jsonl" --out-dir results/eval
+
+# Figures 1–3
+python evaluation/make_figures.py \
+  --model gemma3=results/eval/1_transform_to_vqa_format_test_pred_gemma3_eval.json \
+  --model medgemma=results/eval/1_transform_to_vqa_format_test_pred_medgemma-4b_eval.json \
+  --model medgemma-ft=results/eval/1_transform_to_vqa_format_test_pred_medgemma-3952_eval.json \
+  --model Qwen2.5-VL-7B=results/eval/1_transform_to_vqa_format_test_pred_Qwen2.5-VL_eval.json \
+  --model Qwen2.5-VL-7B-ft=results/eval/1_transform_to_vqa_format_test_pred_v1-4444_eval.json \
+  --out-dir results/figures
+```
+
+The reference `results/scores/total.json` and `results/eval/*_eval.json` shipped here let you regenerate the tables/figures without re-running inference.
+
+## 📁 Repository layout
+
+```
+data/          dataset generation + VLM-ready JSONL builders
+augmentation/  weak image augmentation (Track 2)
+training/      LoRA training + inference recipes (MS-Swift)
+evaluation/    NLG metrics, LLM adjudicator, figures
+results/       reference metric + adjudication JSONs (paper tables)
+notebooks/     usage.ipynb (quickstart)
+```
 
 ## 📜 License
 
-This dataset is released under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
+Dataset and code: [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
 
 ## 📌 Citation
 
-Please cite the associated dataset paper if you use Kvasir-VQA-x1 in your work:
-
 ```bibtex
-
 @incollection{Gautam2025Oct,
-  author={Gautam, Sushant and Riegler, Michael and Halvorsen, P{a}l},
-  title={Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy},
-  booktitle={Data Engineering in Medical Imaging},
-  year={2025},
-  publisher={Springer, Cham},
-  doi={10.1007/978-3-032-08009-7_6}
+  author    = {Gautam, Sushant and Riegler, Michael and Halvorsen, P{\aa}l},
+  title     = {Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy},
+  booktitle = {Data Engineering in Medical Imaging},
+  year      = {2025},
+  publisher = {Springer, Cham},
+  doi       = {10.1007/978-3-032-08009-7_6}
 }
 
 @article{Gautam2025Jun,
-	author = {Gautam, Sushant and Riegler, Michael A. and Halvorsen, P{\aa}l},
-	title = {{Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy}},
-	journal = {arXiv},
-	year = {2025},
-	month = jun,
-	eprint = {2506.09958},
-	doi = {10.48550/arXiv.2506.09958}
+  author  = {Gautam, Sushant and Riegler, Michael A. and Halvorsen, P{\aa}l},
+  title   = {{Kvasir-VQA-x1: A Multimodal Dataset for Medical Reasoning and Robust MedVQA in Gastrointestinal Endoscopy}},
+  journal = {arXiv},
+  year    = {2025},
+  month   = jun,
+  eprint  = {2506.09958},
+  doi     = {10.48550/arXiv.2506.09958}
 }
 ```
-

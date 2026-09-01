@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Secrets / local config
+.env
+
+# Data & generated artifacts (regenerate with the scripts; do not commit)
+data/
+*.jsonl
+*.parquet
+*.pt
+*.png
+*.jpg
+*.jpeg
+
+# Model checkpoints / training outputs
+output/
+output_vqa_x1/
+wandb/
+runs/
+.swift/
+
+# LLM / HF caches
+.llm_cache/
+.cache/
+.hf_cache/
+
+# OS / editor
+.DS_Store
+._*
+.ipynb_checkpoints/
